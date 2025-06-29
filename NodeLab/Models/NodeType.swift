@@ -10,19 +10,19 @@ import SwiftUI
 
 
 enum NodeType: String, Codable, CaseIterable {
-    case tapEvent = "Tap Event"
+    case tapEvent    = "Tap Event"
     case rotateObject = "Rotate Object"
-    case playSound = "Play Sound"
-    case spawnObject = "Spawn Object"
-    case delay = "Wait"
+    case changeColor  = "Change Color"
+    case spawnObject  = "Spawn Object"
+    case delay        = "Delay"
 
     var color: Color {
         switch self {
-        case .tapEvent: return .blue
+        case .tapEvent:     return .blue
         case .rotateObject: return .purple
-        case .playSound: return .orange
-        case .spawnObject: return .green
-        case .delay: return .gray
+        case .changeColor:  return .orange
+        case .spawnObject:  return .green
+        case .delay:        return .gray
         }
     }
 }

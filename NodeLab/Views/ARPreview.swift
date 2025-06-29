@@ -3,8 +3,6 @@
 import SwiftUI
 import RealityKit
 import ARKit
-import AVFoundation
-import AudioToolbox
 
 struct ARPreview: UIViewRepresentable {
     var nodes: [Node]
@@ -12,10 +10,8 @@ struct ARPreview: UIViewRepresentable {
 
     class Coordinator: NSObject {
         weak var arView: ARView?
-        var avPlayer: AVPlayer?
-        var systemSoundID: SystemSoundID = 0
-        let nodes: [Node]
-        let connections: [Connection]
+        var nodes: [Node]
+        var connections: [Connection]
 
         init(nodes: [Node], connections: [Connection]) {
             self.nodes = nodes
@@ -26,14 +22,6 @@ struct ARPreview: UIViewRepresentable {
                 selector: #selector(runManually),
                 name: .runGraphManually,
                 object: nil)
-
-            // prepare system sound
-            if let url = Bundle.main.url(forResource: "ding", withExtension: "mp3") {
-                AudioServicesCreateSystemSoundID(url as CFURL, &systemSoundID)
-                print("✅ SystemSoundID prepared")
-            } else {
-                print("❌ ding.mp3 not found for SystemSoundID")
-            }
         }
 
         @objc func runManually() {
@@ -41,28 +29,7 @@ struct ARPreview: UIViewRepresentable {
             guard let cube = arView?.scene.findEntity(named: "targetCube") else {
                 print("❌ No cube in scene"); return
             }
-            rotate(cube)
-
-            // 1) Try AVPlayer
-            playWithAVPlayer()
-
-            // 2) Try SystemSound
-            playWithSystemSound()
-        }
-
-        private func playWithAVPlayer() {
-            guard let url = Bundle.main.url(forResource: "ding", withExtension: "mp3") else {
-                print("❌ ding.mp3 not found for AVPlayer"); return
-            }
-            avPlayer = AVPlayer(url: url)
-            avPlayer?.play()
-            print("🔊 AVPlayer.play() called")
-        }
-
-        private func playWithSystemSound() {
-            guard systemSoundID != 0 else { return }
-            AudioServicesPlaySystemSound(systemSoundID)
-            print("🔔 SystemSound played")
+            runGraph(on: cube)
         }
 
         @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
@@ -75,7 +42,24 @@ struct ARPreview: UIViewRepresentable {
         }
 
         func runGraph(on entity: Entity) {
-            // your existing graph logic…
+            guard let start = nodes.first(where: { $0.type == .tapEvent }) else {
+                print("❌ No Tap Event node"); return
+            }
+
+            var visited: Set<UUID> = []
+
+            func runNode(_ node: Node) {
+                visited.insert(node.id)
+                guard let nextID = connections.first(where: { $0.fromNode == node.id })?.toNode,
+                      let next = nodes.first(where: { $0.id == nextID }),
+                      !visited.contains(next.id) else { return }
+
+                perform(next) {
+                    runNode(next)
+                }
+            }
+
+            runNode(start)
         }
 
         private func rotate(_ entity: Entity) {
@@ -85,6 +69,40 @@ struct ARPreview: UIViewRepresentable {
                         duration: 1.0)
             print("⚙️ rotate executed")
         }
+
+        private func changeColor(_ entity: Entity) {
+            guard var model = entity as? ModelEntity else { return }
+            let color = UIColor(red: .random(in: 0...1),
+                               green: .random(in: 0...1),
+                               blue: .random(in: 0...1),
+                               alpha: 1)
+            model.model?.materials = [SimpleMaterial(color: color, isMetallic: false)]
+            print("🎨 color changed")
+        }
+
+        private func spawn(_ entity: Entity) {
+            guard let parent = entity.parent else { return }
+            let clone = entity.clone(recursive: true)
+            clone.position.x += 0.4
+            parent.addChild(clone)
+            print("🆕 cube spawned")
+        }
+
+        private func perform(_ node: Node, completion: @escaping () -> Void) {
+            guard let cube = arView?.scene.findEntity(named: "targetCube") else { completion(); return }
+            switch node.type {
+            case .rotateObject:
+                rotate(cube); completion()
+            case .changeColor:
+                changeColor(cube); completion()
+            case .spawnObject:
+                spawn(cube); completion()
+            case .delay:
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) { completion() }
+            case .tapEvent:
+                completion()
+            }
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -92,16 +110,6 @@ struct ARPreview: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> ARView {
-        // configure audio session for playback
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default)
-            try session.setActive(true)
-            print("✅ AVAudioSession configured")
-        } catch {
-            print("❌ AVAudioSession error:", error)
-        }
-
         let arView = ARView(frame: .zero)
         context.coordinator.arView = arView
 
@@ -128,5 +136,8 @@ struct ARPreview: UIViewRepresentable {
         return arView
     }
 
-    func updateUIView(_ uiView: ARView, context: Context) {}
+    func updateUIView(_ uiView: ARView, context: Context) {
+        context.coordinator.nodes = nodes
+        context.coordinator.connections = connections
+    }
 }
