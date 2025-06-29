@@ -1,5 +1,3 @@
-// NodeView.swift
-
 import SwiftUI
 
 struct NodeView: View {
@@ -29,9 +27,12 @@ struct NodeView: View {
         .padding(.vertical, 8)
         .padding(.horizontal)
         .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(white: 0.95))
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
         )
+        .frame(maxWidth: 200)
+        .padding(.horizontal, 10) // add spacing from edges if needed
     }
 }
 

@@ -22,7 +22,7 @@ struct NodeLabView: View {
                             NodeView(node: $node, onDelete: {
                                 delete(node)
                             })
-                                .frame(width: 110)
+                                .frame(width: 40)
                         }
                     }
                     .padding(.horizontal)
