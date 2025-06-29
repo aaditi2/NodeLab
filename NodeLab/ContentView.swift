@@ -53,20 +53,22 @@ struct ContentView: View {
     }
 
     var outputDescription: String {
-        guard let tap = nodes.first(where: { $0.type == .tapEvent }) else {
-            return "❌ No Tap Event node"
+        guard let start = nodes.first(where: { $0.type == .tapEvent }) else {
+            return "❌ Add a Tap Event node"
         }
 
-        guard let rotateID = connections.first(where: { $0.fromNode == tap.id })?.toNode,
-              let rotate = nodes.first(where: { $0.id == rotateID && $0.type == .rotateObject }) else {
-            return "❌ Tap is not connected to Rotate"
+        var visited = Set<UUID>()
+        var current = start
+        var parts = ["✅ When tapped"]
+
+        while let nextID = connections.first(where: { $0.fromNode == current.id })?.toNode,
+              let next = nodes.first(where: { $0.id == nextID }),
+              !visited.contains(next.id) {
+            visited.insert(next.id)
+            parts.append(next.type.rawValue)
+            current = next
         }
 
-        if let soundID = connections.first(where: { $0.fromNode == rotate.id })?.toNode,
-           let _ = nodes.first(where: { $0.id == soundID && $0.type == .playSound }) {
-            return "✅ When tapped → Rotate → Play Sound"
-        }
-
-        return "✅ When tapped → Rotate"
+        return parts.joined(separator: " → ")
     }
 }

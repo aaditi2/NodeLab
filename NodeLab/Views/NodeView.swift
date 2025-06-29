@@ -11,7 +11,7 @@ struct NodeView: View {
                 .fill(node.type.color)
                 .frame(width: 16, height: 16)
 
-            Text(node.type.rawValue)
+            Text(node.label)
                 .font(.body)
                 .foregroundColor(.primary)
 
@@ -35,7 +35,6 @@ struct NodeView: View {
 
 struct NodeView_Previews: PreviewProvider {
     @State static var sample = Node(
-        /* id auto-generated */
         type: .tapEvent,
         position: CGPoint(x: 20, y: 20)
     )

@@ -51,7 +51,6 @@ struct NodeLabView_Previews: PreviewProvider {
     static var previews: some View {
         // Create one tap-event node at (0,0)
         let sampleNode = Node(
-            /* id auto-generated */
             type: .tapEvent,
             position: CGPoint(x: 0, y: 0)
         )
