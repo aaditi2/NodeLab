@@ -19,8 +19,10 @@ struct NodeLabView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach($nodes) { $node in
-                            NodeView(node: $node)
-                                .frame(width: 140)
+                            NodeView(node: $node, onDelete: {
+                                delete(node)
+                            })
+                                .frame(width: 110)
                         }
                     }
                     .padding(.horizontal)
@@ -44,6 +46,13 @@ struct NodeLabView: View {
                 .padding(.bottom, 40)
             }
         }
+    }
+
+    private func delete(_ node: Node) {
+        if let idx = nodes.firstIndex(of: node) {
+            nodes.remove(at: idx)
+        }
+        connections.removeAll { $0.fromNode == node.id || $0.toNode == node.id }
     }
 }
 
