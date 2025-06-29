@@ -4,6 +4,7 @@ import SwiftUI
 
 struct NodeView: View {
     @Binding var node: Node
+    var onDelete: (() -> Void)? = nil
 
     var body: some View {
         HStack {
@@ -14,11 +15,12 @@ struct NodeView: View {
             Text(node.label)
                 .font(.body)
                 .foregroundColor(.primary)
+                .lineLimit(1)
 
             Spacer()
 
             Button {
-                // You can hook up deletion here if desired…
+                onDelete?()
             } label: {
                 Image(systemName: "trash")
                     .foregroundColor(.red)

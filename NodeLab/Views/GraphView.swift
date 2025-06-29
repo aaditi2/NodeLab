@@ -36,7 +36,9 @@ struct GraphView: View {
             ForEach($nodes) { nodeBinding in
                 let nodeValue = nodeBinding.wrappedValue
 
-                NodeView(node: nodeBinding)
+                NodeView(node: nodeBinding, onDelete: {
+                    delete(nodeValue)
+                })
                     .position(nodeValue.position)
                     .onTapGesture {
                         handleTap(on: nodeValue)
@@ -87,6 +89,18 @@ struct GraphView: View {
                 break
             }
         }
+    }
+
+    // MARK: - Delete a node and its connections
+    private func delete(_ node: Node) {
+        if let idx = nodes.firstIndex(of: node) {
+            nodes.remove(at: idx)
+        }
+        connections.removeAll { $0.fromNode == node.id || $0.toNode == node.id }
+        if selectedNodeID == node.id {
+            selectedNodeID = nil
+        }
+        print("🗑️ Deleted node \(node.id)")
     }
 
     // MARK: - Utility: distance from point to line segment
